@@ -209,11 +209,7 @@ DEFINE_PER_CPU(bool, cpu_dead_idle);
  */
 static void cpu_idle_loop(void)
 {
-	int cpu = smp_processor_id();
-
 	while (1) {
-		int cpu = smp_processor_id();
-
 		/*
 		 * If the arch has a polling bit, we maintain an invariant:
 		 *
@@ -222,26 +218,21 @@ static void cpu_idle_loop(void)
 		 * the polling bit set, then setting need_resched is
 		 * guaranteed to cause the cpu to reschedule.
 		 */
-
 		__current_set_polling();
 		quiet_vmstat();
 		tick_nohz_idle_enter();
-
 		while (!need_resched()) {
 			check_pgt_cache();
 			rmb();
-
-			if (cpu_is_offline(cpu)) {
+			if (cpu_is_offline(smp_processor_id())) {
 				rcu_cpu_notify(NULL, CPU_DYING_IDLE,
-					       (void *)(long)cpu);
+					       (void *)(long)smp_processor_id());
 				smp_mb(); /* all activity before dead. */
 				this_cpu_write(cpu_dead_idle, true);
 				arch_cpu_idle_dead();
 			}
-
 			local_irq_disable();
 			arch_cpu_idle_enter();
-
 			/*
 			 * In poll mode we reenable interrupts and spin.
 			 *
@@ -255,10 +246,8 @@ static void cpu_idle_loop(void)
 				cpu_idle_poll();
 			else
 				cpuidle_idle_call();
-
 			arch_cpu_idle_exit();
 		}
-
 		/*
 		 * Since we fell out of the loop above, we know
 		 * TIF_NEED_RESCHED must be set, propagate it into
@@ -270,7 +259,6 @@ static void cpu_idle_loop(void)
 		preempt_set_need_resched();
 		tick_nohz_idle_exit();
 		__current_clr_polling();
-
 		/*
 		 * We promise to call sched_ttwu_pending and reschedule
 		 * if need_resched is set while polling is set.  That
@@ -278,7 +266,6 @@ static void cpu_idle_loop(void)
 		 * before doing these things.
 		 */
 		smp_mb__after_atomic();
-
 		sched_ttwu_pending();
 		schedule_preempt_disabled();
 	}
