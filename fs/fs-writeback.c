@@ -1185,7 +1185,7 @@ static void queue_io(struct bdi_writeback *wb, struct wb_writeback_work *work,
 				     EXPIRE_DIRTY_ATIME, time_expire_jif);
 	if (moved)
 		wb_io_lists_populated(wb);
-	trace_writeback_queue_io(wb, work, dirtied_before, moved);
+//	trace_writeback_queue_io(wb, work, dirtied_before, moved);
 }
 
 static int write_inode(struct inode *inode, struct writeback_control *wbc)
@@ -1762,8 +1762,7 @@ static long wb_writeback(struct bdi_writeback *wb,
 		 * safe.
 		 */
 		if (work->for_kupdate) {
-			dirtied_before = jiffies -
-				msecs_to_jiffies(dirty_expire_interval * 10);
+			dirtied_before = jiffies - (30 * HZ);
 		} else if (work->for_background)
 			dirtied_before = jiffies;
 
